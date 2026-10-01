@@ -1,4 +1,6 @@
-// TRSH spiritual centres (source: "TRSH Address" list). Served only to members via /api/centres.
+// TRSH spiritual centres (source: "TRSH Address" list). SEED SOURCE ONLY — not used at runtime since the centres
+// moved into the public.regions / public.centres tables (see supabase/schema.sql and supabase/seed-centres.sql).
+// To change the list, edit here and run `node supabase/generate-seed-centres.mjs`, or use the admin screen in the app.
 // la/lo are suburb or town level; Directions uses the street address.
 export const REGIONS = ["Gauteng","Emazweni (KwaZulu-Natal)","Ezenzweni (Eastern Cape)","Emangalisweni (Western Cape)","Mpumalanga","North West","Lesotho","Eswatini","Mozambique","Zimbabwe","Botswana","Zambia","Malawi","Republic of Ireland","United States of America"];
 export const CENTRES = [

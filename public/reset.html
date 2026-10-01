@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4c9c" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f131c" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<title>TSHK Compass · Set a new password</title>
+<link rel="icon" type="image/png" href="/icon-192.png">
+<style>
+:root{--bg:#f3f4f7;--surface:#fff;--line:#d5dae3;--ink:#171c2a;--ink-2:#4f5666;--ink-3:#7d8494;--accent:#1f4c9c;--accent-soft:#e3eaf7;--warn:#9a6a10;--ok:#2f7a4a;
+  --shadow:0 10px 30px rgba(20,35,70,.10);--f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;--f-mono:"IBM Plex Mono",Menlo,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root{--bg:#0f131c;--surface:#171d2a;--line:#303a4d;--ink:#eef1f7;--ink-2:#b5bccb;--ink-3:#7f8899;--accent:#6f9ce6;--accent-soft:#1c2a45;--warn:#e0b04a;--ok:#6cc48a;--shadow:0 10px 30px rgba(0,0,0,.45)}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;display:flex;align-items:flex-start;justify-content:center;padding:8vh 16px}
+.card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px 18px;display:flex;flex-direction:column;gap:12px}
+h1{margin:0;font-size:24px;font-weight:600}
+p{margin:0;color:var(--ink-2);font-size:14px}
+label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+input{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px;font:inherit;font-size:16px}
+.pwwrap{display:flex;gap:8px}
+.pwwrap input{flex:1;min-width:0}
+button{font:inherit;cursor:pointer;border-radius:10px;padding:12px;border:1px solid transparent}
+.primary{background:var(--accent);color:#fff;font-weight:600}
+.quiet{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.msg{font-size:13px;color:var(--warn);min-height:1em}
+.ok{color:var(--ok)}
+.pwtoggle{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:600;padding:0 12px;white-space:nowrap}
+.logo{width:58px;height:auto}
+</style>
+</head>
+<body>
+<div class="card">
+  <img class="logo" src="/logo.png" alt="The Spiritual Home Kingdom">
+  <h1>Set a new password</h1>
+  <p id="lead">Open this page from the link in your reset email.</p>
+  <form id="form" hidden novalidate>
+    <label for="pw">New password (at least 8 characters)</label>
+    <div class="pwwrap"><input id="pw" type="password" autocomplete="new-password" required><button class="pwtoggle" id="show" type="button">Show</button></div>
+    <label for="pw2">Type it again</label>
+    <input id="pw2" type="password" autocomplete="new-password" required>
+    <button class="primary" id="save" type="submit">Save the new password</button>
+  </form>
+  <p class="msg" id="msg" role="status" aria-live="polite"></p>
+  <p><a id="login" href="/">Go to the app</a></p>
+</div>
+<script src="config.js"></script>
+<script>
+(function(){
+  var CFG = window.TSHK_CONFIG || {};
+  var el = function(id){ return document.getElementById(id); };
+  var msg = function(t, ok){ el("msg").textContent = t; el("msg").className = "msg" + (ok ? " ok" : ""); };
+  /* Supabase puts the recovery session in the URL hash: #access_token=...&refresh_token=...&type=recovery */
+  var hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+  var accessToken = hash.get("access_token");
+  var refreshToken = hash.get("refresh_token");
+  var type = hash.get("type");
+  var errorDescription = hash.get("error_description") || new URLSearchParams(location.search).get("error_description");
+
+  function toggle(){ var i = el("pw"); i.type = i.type === "password" ? "text" : "password"; el("show").textContent = i.type === "text" ? "Hide" : "Show"; }
+  el("show").addEventListener("click", toggle);
+
+  if (errorDescription) { el("lead").textContent = "That reset link is no longer valid. Request a new one from the app."; msg(decodeURIComponent(errorDescription.replace(/\+/g, " "))); return; }
+  if (!accessToken || (type && type !== "recovery")) {
+    el("lead").textContent = "This page needs the link from your reset email. In the app, tap “Forgot password?” and open the link we send you.";
+    return;
+  }
+  el("lead").textContent = "Choose a new password for your account.";
+  el("form").hidden = false;
+
+  el("form").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    var pw = el("pw").value, pw2 = el("pw2").value;
+    if (pw.length < 8) return msg("Use at least 8 characters.");
+    if (pw !== pw2) return msg("The two passwords are not the same.");
+    el("save").disabled = true;
+    try {
+      var r = await fetch(CFG.SUPABASE_URL + "/auth/v1/user", {
+        method: "PUT",
+        headers: { apikey: CFG.SUPABASE_ANON_KEY, Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw })
+      });
+      var j = await r.json().catch(function(){ return {}; });
+      if (!r.ok) throw new Error(j.msg || j.message || ("HTTP " + r.status));
+      el("pw").value = ""; el("pw2").value = "";
+      history.replaceState(null, "", location.pathname);          // drop the token from the address bar
+      msg("Password updated. Redirecting to the login screen…", true);
+      setTimeout(function(){ location.replace("/?reset=done"); }, 1200);
+    } catch (e) {
+      msg("Could not set the password (" + e.message + "). Request a new link from the app.");
+    } finally { el("save").disabled = false; }
+  });
+})();
+</script>
+</body>
+</html>
