@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { setEnv, memoryDb, installFetch, fakeReq, fakeRes } from "./helpers.js";
+import { setEnv, memoryDb, installFetch, fakeReq, fakeRes, seedCentres } from "./helpers.js";
 
 setEnv();
 const me = (await import("../../api/me.js")).default;
@@ -29,13 +29,16 @@ test("first sign-in starts a 7-day trial; centres are served during the trial", 
   try {
     const res = await call(me, fakeReq({ headers: auth })); const j = res.json();
     assert.equal(res.statusCode, 200); assert.equal(j.state, "trial"); assert.equal(j.days_left, 7); assert.equal(j.price, "100.00");
+    assert.equal(j.is_admin, false); assert.equal(j.must_change_password, false);
     assert.equal(db.t.members.length, 1);
-    const c = await call(centres, fakeReq({ headers: auth })); assert.equal(c.statusCode, 200); assert.equal(c.json().centres.length, 88);
+    await seedCentres(db);
+    const c = await call(centres, fakeReq({ headers: auth })); assert.equal(c.statusCode, 200);
+    assert.equal(c.json().centres.length, 88); assert.equal(c.json().regions.length, 15);
   } finally { f.restore(); }
 });
 
 test("after the trial: centres locked (402) until payment", async () => {
-  const db = memoryDb(); db.t.members.push({ user_id: "u1", status: "trialing", trial_ends_at: "2020-01-01T00:00:00Z" }); const f = installFetch(db);
+  const db = memoryDb(); await seedCentres(db); db.t.members.push({ user_id: "u1", status: "trialing", trial_ends_at: "2020-01-01T00:00:00Z" }); const f = installFetch(db);
   try {
     assert.equal((await call(me, fakeReq({ headers: auth }))).json().state, "trial_ended");
     assert.equal((await call(centres, fakeReq({ headers: auth }))).statusCode, 402);
@@ -58,6 +61,7 @@ test("checkout returns a correctly signed R100 monthly PayFast form", async () =
 test("full cycle: checkout → PayFast ITN → access → cancel", { skip: !HAS_PHP && "PHP not installed" }, async () => {
   const db = memoryDb(); db.t.members.push({ user_id: "u1", status: "trialing", trial_ends_at: "2020-01-01T00:00:00Z" }); const f = installFetch(db);
   try {
+    await seedCentres(db);
     const co = (await call(checkout, fakeReq({ method: "POST", headers: auth }))).json();
     const data = { m_payment_id: co.fields.m_payment_id, pf_payment_id: "555001", payment_status: "COMPLETE", item_name: co.fields.item_name, item_description: "",
       amount_gross: "100.00", amount_fee: "-3.45", amount_net: "96.55", name_first: "", name_last: "", email_address: "member@example.org", merchant_id: "10000100", token: "tok-live-1", billing_date: co.fields.billing_date };

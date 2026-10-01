@@ -218,7 +218,6 @@ body.locked{overflow:hidden}
 .m-card form{display:flex;flex-direction:column;gap:8px}
 .m-card label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
 .m-card input{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px;font:inherit;font-size:16px}
-#m-code{letter-spacing:.3em;font-family:var(--f-mono);font-size:22px;text-align:center}
 .m-price{display:flex;align-items:baseline;gap:6px;justify-content:center;color:var(--ink-2)}
 .m-price b{font-family:var(--f-mono);font-size:34px;color:var(--ink)}
 .m-state{margin:0;font-weight:600}
@@ -226,6 +225,29 @@ body.locked{overflow:hidden}
 .m-foot{display:flex;justify-content:space-between;gap:10px}
 .linkbtn{appearance:none;background:none;border:0;color:var(--accent);font:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:6px 0}
 .m-fine{font-size:12px;color:var(--ink-3);margin:0;text-align:center}
+/* Password fields with a show/hide button */
+.pwwrap{display:flex;gap:8px;align-items:stretch}
+.pwwrap input{flex:1;min-width:0}
+.pwtoggle{appearance:none;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);border-radius:10px;padding:0 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+/* Trial page feature list */
+.m-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.m-feats li{display:flex;gap:8px;align-items:flex-start;font-size:14px;color:var(--ink-2)}
+.m-feats li::before{content:"✓";color:var(--ok);font-weight:700}
+/* Admin tools */
+.m-card.wide{max-width:600px}
+.a-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.a-tabs button{appearance:none;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.a-tabs button.on{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.a-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.a-grid .full{grid-column:1/-1}
+.a-list{display:flex;flex-direction:column;gap:6px;max-height:44vh;overflow:auto}
+.a-row{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface)}
+.a-row .who{font-size:13px;overflow-wrap:anywhere}
+.a-row .st{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.a-row button{appearance:none;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:5px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.a-warn{border:1px solid var(--gold);background:var(--gold-soft);color:var(--warn);border-radius:10px;padding:10px;font-size:13px;margin:0}
+.a-temp{font-family:var(--f-mono);font-size:20px;letter-spacing:.06em;background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;padding:12px;text-align:center;overflow-wrap:anywhere;user-select:all}
+.a-actions{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 
 <div class="app">
@@ -388,21 +410,135 @@ body.locked{overflow:hidden}
   </section>
 </div>
 
-<!-- MEMBERSHIP: sign-in, trial, paywall, account (member.js) -->
+<!-- MEMBERSHIP: login / create account, forced password change, trial, paywall, account (member.js) -->
 <div class="member" id="member" hidden role="dialog" aria-modal="true" aria-labelledby="m-title">
   <div class="m-card">
     <div class="m-top"><img class="m-logo" src="logo.png" alt="The Spiritual Home Kingdom">
       <label class="langsel"><select id="m-lang" aria-label="Language"><option value="zu">isiZulu</option><option value="pt">Português</option><option value="ny">Chichewa · Chinyanja</option><option value="bem">iciBemba</option><option value="en">English only</option></select></label></div>
     <h2 id="m-title">TSHK Compass</h2>
     <p class="m-sub" id="m-sub"></p>
-    <form id="m-auth-email" hidden novalidate><label for="m-email" id="m-email-l">Your email address</label><input id="m-email" type="email" autocomplete="email" inputmode="email" required><button class="btn primary" id="m-send" type="submit">Send code</button></form>
-    <form id="m-auth-code" hidden novalidate><label for="m-code" id="m-code-l">6-digit code</label><input id="m-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required><button class="btn primary" id="m-verify" type="submit">Sign in</button><button class="btn quiet" id="m-change" type="button">Use a different email</button></form>
-    <div id="m-account" hidden><p class="m-state" id="m-state"></p></div>
+
+    <!-- log in -->
+    <form id="m-login" hidden novalidate>
+      <label for="m-login-email" id="m-login-email-l">Email address</label>
+      <input id="m-login-email" type="email" autocomplete="email" inputmode="email" required>
+      <label for="m-login-pass" id="m-login-pass-l">Password</label>
+      <div class="pwwrap"><input id="m-login-pass" type="password" autocomplete="current-password" required><button class="pwtoggle" id="m-login-show" type="button">Show</button></div>
+      <button class="btn primary" id="m-login-btn" type="submit">Log in</button>
+      <button class="linkbtn" id="m-forgot-link" type="button">Forgot password?</button>
+      <button class="linkbtn" id="m-to-signup" type="button">Create an account</button>
+    </form>
+
+    <!-- create account -->
+    <form id="m-signup" hidden novalidate>
+      <label for="m-signup-email" id="m-signup-email-l">Email address</label>
+      <input id="m-signup-email" type="email" autocomplete="email" inputmode="email" required>
+      <label for="m-signup-pass" id="m-signup-pass-l">Choose a password (at least 8 characters)</label>
+      <div class="pwwrap"><input id="m-signup-pass" type="password" autocomplete="new-password" required><button class="pwtoggle" id="m-signup-show" type="button">Show</button></div>
+      <button class="btn primary" id="m-signup-btn" type="submit">Create account</button>
+      <button class="linkbtn" id="m-to-login" type="button">Back to log in</button>
+    </form>
+
+    <!-- forgot password -->
+    <form id="m-forgot" hidden novalidate>
+      <label for="m-forgot-email" id="m-forgot-email-l">Email address</label>
+      <input id="m-forgot-email" type="email" autocomplete="email" inputmode="email" required>
+      <button class="btn primary" id="m-forgot-btn" type="submit">Send the link</button>
+      <button class="linkbtn" id="m-forgot-back" type="button">Back to log in</button>
+    </form>
+
+    <!-- confirm your email -->
+    <div id="m-checkmail" hidden>
+      <p class="m-sub" id="m-checkmail-note"></p>
+      <div class="a-actions"><button class="btn primary" id="m-resend" type="button">Resend the email</button></div>
+      <button class="linkbtn" id="m-checkmail-back" type="button">Back to log in</button>
+    </div>
+
+    <!-- forced password change (server-enforced) -->
+    <form id="m-mustchange" hidden novalidate>
+      <label for="m-newpass" id="m-newpass-l">New password</label>
+      <div class="pwwrap"><input id="m-newpass" type="password" autocomplete="new-password" required><button class="pwtoggle" id="m-newpass-show" type="button">Show</button></div>
+      <button class="btn primary" id="m-newpass-btn" type="submit">Save and continue</button>
+    </form>
+
+    <!-- trial intro -->
+    <div id="m-trial" hidden>
+      <ul class="m-feats">
+        <li data-t="feat1">Compass to Ekuphumuleni</li>
+        <li data-t="feat2">Msamo positioning</li>
+        <li data-t="feat3">Sun and shadow guidance</li>
+        <li data-t="feat4">Centres directory with directions</li>
+        <li data-t="feat5">English and four other languages (isiZulu, Português, Chichewa, iciBemba)</li>
+      </ul>
+      <p class="m-sub" id="m-trial-line"></p>
+      <div class="a-actions"><button class="btn primary" id="m-trial-start" type="button">Start using the app</button><button class="btn quiet" id="m-trial-pay" type="button">Pay now</button></div>
+    </div>
+
+    <div id="m-account" hidden>
+      <p class="m-state" id="m-state"></p>
+      <div class="a-actions"><button class="linkbtn" id="m-features" type="button">What's included &amp; pricing</button><button class="linkbtn" id="m-admin" type="button" hidden>Admin tools</button></div>
+    </div>
     <div id="m-pay" hidden><div class="m-price"><b id="m-price">R100</b><span>/ month</span></div><button class="btn primary" id="m-subscribe" type="button">Subscribe</button><p class="m-fine">Secure payment by PayFast · cancel any time</p></div>
     <button class="btn quiet" id="m-cancel" type="button" hidden>Cancel subscription</button>
     <button class="btn quiet" id="m-retry" type="button" hidden>Try again</button>
     <p class="m-msg" id="m-msg" role="status" aria-live="polite"></p>
     <div class="m-foot"><button class="linkbtn" id="m-signout" type="button" hidden>Sign out</button><button class="linkbtn" id="m-close" type="button" hidden>Close</button></div>
+  </div>
+</div>
+
+<!-- ADMIN: add centre, auto-generate password, delete user (member.js; server enforces is_admin) -->
+<div class="member" id="admin" hidden role="dialog" aria-modal="true" aria-labelledby="a-title">
+  <div class="m-card wide">
+    <h2 id="a-title">Admin tools</h2>
+    <p class="m-sub" id="a-sub"></p>
+    <div class="a-tabs">
+      <button id="a-tab-centre" type="button" class="on">Add centre</button>
+      <button id="a-tab-reset" type="button">Auto-generate password</button>
+      <button id="a-tab-delete" type="button">Delete user</button>
+    </div>
+
+    <section id="a-centre" hidden>
+      <div class="a-grid">
+        <div class="full"><label for="a-region" id="a-region-l">Region</label><input id="a-region" list="a-regions" required><datalist id="a-regions"></datalist></div>
+        <div class="full"><label for="a-name" id="a-name-l">Centre name</label><input id="a-name" required maxlength="80"></div>
+        <div class="full"><label for="a-address" id="a-address-l">Address (optional)</label><input id="a-address" maxlength="240"></div>
+        <div><label for="a-phone" id="a-phone-l">Phone (optional)</label><input id="a-phone" placeholder="+27 11 555 0100" maxlength="25"></div>
+        <div><label for="a-lat" id="a-lat-l">Latitude</label><input id="a-lat" inputmode="decimal" placeholder="-26.20"></div>
+        <div><label for="a-lng" id="a-lng-l">Longitude</label><input id="a-lng" inputmode="decimal" placeholder="28.04"></div>
+        <div class="full"><button class="btn primary" id="a-centre-btn" type="button">Add centre</button></div>
+      </div>
+    </section>
+
+    <section id="a-reset" hidden>
+      <label for="a-reset-q" id="a-reset-q-l">Search by email</label>
+      <div class="pwwrap"><input id="a-reset-q" inputmode="email" placeholder="name@example.org"><button class="pwtoggle" id="a-reset-search" type="button">Search</button></div>
+      <div class="a-list" id="a-reset-list"></div>
+      <div id="a-reset-confirm" hidden>
+        <p class="a-warn" id="a-reset-warn"></p>
+        <div class="a-actions"><button class="btn primary" id="a-reset-go" type="button">Generate password</button><button class="linkbtn" id="a-reset-cancel" type="button">Cancel</button></div>
+        <div id="a-temp" hidden>
+          <p class="m-sub" id="a-temp-for"></p>
+          <div class="a-temp" id="a-temp-pw"></div>
+          <p class="a-warn" id="a-temp-note"></p>
+          <div class="a-actions"><button class="btn primary" id="a-copy" type="button">Copy</button><button class="linkbtn" id="a-temp-close" type="button">Close</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="a-delete" hidden>
+      <label for="a-delete-q" id="a-delete-q-l">Search by email</label>
+      <div class="pwwrap"><input id="a-delete-q" inputmode="email" placeholder="name@example.org"><button class="pwtoggle" id="a-delete-search" type="button">Search</button></div>
+      <div class="a-list" id="a-delete-list"></div>
+      <div id="a-delete-confirm" hidden>
+        <p class="a-warn" id="a-delete-warn"></p>
+        <label for="a-delete-type" id="a-delete-type-l">Type the email to confirm</label>
+        <input id="a-delete-type" autocomplete="off">
+        <div class="a-actions"><button class="btn primary" id="a-delete-go" type="button" disabled>Delete account</button><button class="linkbtn" id="a-delete-cancel" type="button">Cancel</button></div>
+      </div>
+    </section>
+
+    <p class="m-msg" id="a-msg" role="status" aria-live="polite"></p>
+    <div class="m-foot"><button class="linkbtn" id="a-close" type="button">Close</button></div>
   </div>
 </div>
 
@@ -417,9 +553,9 @@ body.locked{overflow:hidden}
 </nav>
 
 <script src="config.js"></script>
-<script src="member.js"></script>
-<script src="geo.js"></script>
 <script src="lang.js"></script>
+<script src="geo.js"></script>
+<script src="member.js"></script>
 <script src="app.js"></script>
 
 <script>

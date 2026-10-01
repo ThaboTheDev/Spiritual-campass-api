@@ -31,6 +31,15 @@ export async function readJson(req) {
   if (!raw) return {};
   try { return JSON.parse(raw); } catch { const e = new Error("invalid_json"); e.status = 400; throw e; }
 }
+/* Query string parameter, without depending on a framework parsing req.url. */
+export function queryParam(req, name) {
+  const raw = String(req.url || "");
+  const i = raw.indexOf("?");
+  if (i < 0) return null;
+  try { return new URLSearchParams(raw.slice(i + 1)).get(name); } catch { return null; }
+}
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isUuid = (v) => UUID_RE.test(String(v || "").trim());
 export function bearer(req) {
   const m = /^Bearer\s+(.+)$/i.exec(req.headers["authorization"] || "");
   return m ? m[1].trim() : null;
