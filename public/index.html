@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="TSHK Compass points Abantwana Bobukhosi Bukamoya toward Ekuphumuleni, the spiritual capital, for prayer and for positioning the msamo.">
+<meta name="theme-color" content="#1f4c9c" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f131c" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TSHK Compass">
+<meta property="og:title" content="TSHK Compass">
+<meta property="og:description" content="Face Ekuphumuleni, the spiritual capital, wherever you are.">
+<meta property="og:image" content="/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+img{max-width:100%}
+</style>
+<title>TSHK Compass</title>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --surface-2:#e9ecf2; --line:#d5dae3;
+  --ink:#171c2a; --ink-2:#4f5666; --ink-3:#7d8494;
+  --accent:#1f4c9c; --accent-ink:#ffffff; --accent-soft:#e3eaf7;
+  --gold:#b8891f; --gold-soft:#f5ecd6; --ok:#2f7a4a; --ok-soft:#dff0e3; --warn:#9a6a10; --warn-soft:#f7ebcf;
+  --dial:#fafbfd; --dial-ring:#dde2ea; --tick:#a7aebc; --tick-major:#3b4358;
+  --shadow:0 10px 30px rgba(20,35,70,.10);
+  --f-display:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131c; --surface:#171d2a; --surface-2:#212a3a; --line:#303a4d;
+    --ink:#eef1f7; --ink-2:#b5bccb; --ink-3:#7f8899;
+    --accent:#6f9ce6; --accent-ink:#0f1a2e; --accent-soft:#1c2a45;
+    --gold:#d9ad3f; --gold-soft:#3a3016; --ok:#6cc48a; --ok-soft:#1d3426; --warn:#e0b04a; --warn-soft:#3a2f14;
+    --dial:#1a2130; --dial-ring:#313b4f; --tick:#5f6a80; --tick-major:#e2e7f0;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131c; --surface:#171d2a; --surface-2:#212a3a; --line:#303a4d;
+  --ink:#eef1f7; --ink-2:#b5bccb; --ink-3:#7f8899;
+  --accent:#6f9ce6; --accent-ink:#0f1a2e; --accent-soft:#1c2a45;
+  --gold:#d9ad3f; --gold-soft:#3a3016; --ok:#6cc48a; --ok-soft:#1d3426; --warn:#e0b04a; --warn-soft:#3a2f14;
+  --dial:#1a2130; --dial-ring:#313b4f; --tick:#5f6a80; --tick-major:#e2e7f0;
+  --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+.app{max-width:520px;margin:0 auto;padding:0 16px calc(84px + env(safe-area-inset-bottom,0px));min-height:100%}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 8px}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.brand h1{margin:0;font-family:var(--f-display);font-weight:500;font-size:26px;line-height:1.1;letter-spacing:-.01em}
+.logo{width:64px;height:auto;flex:none}
+.langsel{display:inline-flex;align-items:center;gap:6px;margin-top:6px;color:var(--ink-2);font-size:12px}
+.langsel svg{width:15px;height:15px;flex:none}
+.langsel select{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:4px 24px 4px 10px;font:inherit;font-size:12px;font-weight:500;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 13px) 55%,calc(100% - 9px) 55%;background-size:4px 4px;background-repeat:no-repeat}
+.guide-logo{display:block;width:150px;max-width:100%;height:auto;margin:6px auto 0}
+.view{display:flex;flex-direction:column;gap:14px;padding-block:8px 16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:5px 10px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);border:1px solid transparent}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-3)}
+.chip.on{background:var(--ok-soft);color:var(--ok)}.chip.on .dot{background:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.warn .dot{background:var(--warn)}
+.chip.bad{background:var(--accent-soft);color:var(--accent)}.chip.bad .dot{background:var(--accent)}
+
+/* Dial */
+.dial-wrap{position:relative;width:min(100%,340px);aspect-ratio:1;max-width:100%;margin:4px auto 0}
+.dial{position:absolute;inset:0;border-radius:50%;background:var(--dial);box-shadow:var(--shadow);border:1px solid var(--dial-ring);will-change:transform}
+.dial svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lubber{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:14px solid var(--ink)}
+.pointer{position:absolute;inset:0;will-change:transform;pointer-events:none}
+.pointer svg{position:absolute;inset:0;width:100%;height:100%}
+.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.hub .deg{font-family:var(--f-mono);font-size:22px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums}
+.hub .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+.dial-wrap.aligned .lubber{border-top-color:var(--gold)}
+.dial-wrap.aligned .hub{border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
+.state{text-align:center;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.state .main{font-family:var(--f-display);font-size:22px;font-weight:500;line-height:1.2;text-wrap:balance}
+.state .sub{font-size:13px;color:var(--ink-2)}
+.state.aligned .main{color:var(--gold)}
+
+/* Readouts */
+.readouts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ro{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ro.wide{grid-column:1 / -1}
+.ro .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.ro .k i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--ink-3)}
+.ro .v{font-family:var(--f-mono);font-size:22px;font-weight:500;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ro .v small{font-size:13px;color:var(--ink-2);font-family:var(--f-body);font-weight:400}
+.ro .v.text{font-family:var(--f-body);font-size:16px;font-weight:500}
+
+.btn{appearance:none;border:0;border-radius:12px;padding:14px 18px;font-weight:600;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;line-height:1.2;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.quiet{background:var(--surface-2);color:var(--ink)}
+.btn small{font-weight:400;opacity:.85}
+.btn:focus-visible,input:focus-visible,select:focus-visible,.tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn[disabled]{opacity:.55;cursor:default}
+.note{font-size:13px;color:var(--ink-2);line-height:1.5}
+.note.warnbox{background:var(--warn-soft);color:var(--ink);border-radius:12px;padding:10px 12px}
+.inapp{display:flex;flex-direction:column;gap:8px}
+.inapp .btn{padding:10px 14px;text-decoration:none}
+
+/* Msamo */
+.big-turn{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.big-turn .num{font-family:var(--f-mono);font-size:64px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums}
+.big-turn .num small{font-size:26px}
+.big-turn .say{font-family:var(--f-display);font-size:22px;font-weight:500;line-height:1.2;text-wrap:balance}
+.big-turn .say-zu{font-size:14px;color:var(--ink-2)}
+.big-turn.aligned{border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
+.big-turn.aligned .num,.big-turn.aligned .say{color:var(--gold)}
+.arrows{display:flex;gap:10px;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:14px;color:var(--ink-3)}
+.level{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.bubble-box{width:64px;height:64px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);position:relative;flex:none}
+.bubble-box::before,.bubble-box::after{content:"";position:absolute;background:var(--line)}
+.bubble-box::before{left:50%;top:6px;bottom:6px;width:1px}
+.bubble-box::after{top:50%;left:6px;right:6px;height:1px}
+.bubble{position:absolute;left:50%;top:50%;width:16px;height:16px;border-radius:50%;background:var(--accent);transform:translate(-50%,-50%);transition:transform .15s linear}
+.bubble.flat{background:var(--ok)}
+.level .t{display:flex;flex-direction:column;gap:2px}
+.level .t b{font-weight:600}
+.level .t span{font-size:13px;color:var(--ink-2)}
+.steps{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.steps li::before{counter-increment:s;content:counter(s);width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:13px;display:grid;place-items:center}
+.steps b{font-weight:600}
+.steps span{display:block;font-size:13px;color:var(--ink-2)}
+
+/* Location */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.field input,.field select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px;font:inherit;font-size:16px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:360px){.row2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card h2{margin:0;font-family:var(--f-display);font-weight:500;font-size:20px;line-height:1.2}
+.card h2 span{display:block;font-family:var(--f-body);font-size:13px;color:var(--ink-2);font-weight:400}
+
+/* Guide */
+.guide{display:flex;flex-direction:column;gap:14px}
+.guide p{margin:0;max-width:62ch}
+.lead{font-family:var(--f-display);font-size:21px;line-height:1.35;font-weight:400}
+.coords{font-family:var(--f-mono);font-size:14px;background:var(--surface-2);border-radius:10px;padding:10px 12px;line-height:1.7}
+.guide h3{margin:8px 0 0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.guide h3 span{text-transform:none;letter-spacing:0;color:var(--ink-3)}
+
+/* Centres */
+.map-card{padding:0;overflow:hidden}
+.map{width:100%;height:min(62vh,440px);background:var(--surface-2)}
+.map-note{font-size:12px;color:var(--ink-2);padding:8px 12px;border-top:1px solid var(--line)}
+.leaflet-container{font-family:var(--f-body);font-size:13px}
+.leaflet-popup-content-wrapper{border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.leaflet-popup-tip{background:var(--surface)}
+.leaflet-popup-content{margin:12px 14px;line-height:1.45}
+.leaflet-container a{color:var(--accent)}
+.pp b{font-family:var(--f-display);font-size:17px;font-weight:500;display:block;margin-bottom:2px}
+.pp .adr{display:block;color:var(--ink-2);font-size:13px}
+.pp .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pp .acts a{display:inline-block;padding:6px 10px;border-radius:8px;background:var(--accent);color:var(--accent-ink)!important;text-decoration:none;font-weight:600;font-size:12px}
+.pp .acts a.q{background:var(--surface-2);color:var(--ink)!important}
+.pin{width:22px;height:22px;border-radius:50% 50% 50% 0;background:var(--accent);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);transform:rotate(-45deg);margin:-22px 0 0 -11px}
+.pin.cap{background:var(--gold);width:26px;height:26px;margin:-26px 0 0 -13px}
+.leaflet-div-icon{background:none;border:0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.7)}}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.7)}
+.c-tools{display:flex;gap:8px;align-items:stretch}
+.c-tools input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px;font:inherit;font-size:16px}
+.c-tools .btn{width:auto;padding:12px 14px;white-space:nowrap}
+.c-group{display:flex;flex-direction:column;gap:6px}
+.c-group h2{margin:10px 0 2px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.c-group h2 span{text-transform:none;letter-spacing:0;font-weight:400}
+.c-item{display:grid;grid-template-columns:1fr auto;gap:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;align-items:center}
+.c-item .n{font-weight:600}
+.c-item .n small{font-weight:400;color:var(--gold);margin-left:6px;font-family:var(--f-mono);font-size:12px}
+.c-item .a{grid-column:1 / -1;font-size:13px;color:var(--ink-2)}
+.c-item .b{display:flex;gap:6px}
+.c-item .b a,.c-item .b button{appearance:none;border:0;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;background:var(--surface-2);color:var(--ink);text-decoration:none;cursor:pointer;font-family:inherit}
+.c-item .b a.dir{background:var(--accent);color:var(--accent-ink)}
+.c-empty{text-align:center;color:var(--ink-3);padding:20px 0;font-size:14px}
+
+/* Tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;z-index:5}
+nav.tabs .inner{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%;max-width:520px}
+.tab{appearance:none;background:none;border:0;border-radius:10px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--ink-3);min-width:0}
+.tab b{font-size:11px;font-weight:600;line-height:1.1}
+.tab span{font-size:9px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tab svg{width:22px;height:22px}
+.tab.active{color:var(--accent);background:var(--accent-soft)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.foot{font-size:12px;color:var(--ink-3);text-align:center;padding-block:10px}
+/* Membership */
+.toprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+.toprow .langsel{margin-top:0}
+.acct{appearance:none;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+body.locked{overflow:hidden}
+.member{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px}
+.m-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px 18px;display:flex;flex-direction:column;gap:12px;margin-top:4vh}
+.m-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.m-logo{width:58px;height:auto}
+.m-card h2{margin:0;font-family:var(--f-display);font-weight:500;font-size:24px;line-height:1.2}
+.m-sub{margin:0;color:var(--ink-2);font-size:14px}
+.m-card form{display:flex;flex-direction:column;gap:8px}
+.m-card label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.m-card input{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px;font:inherit;font-size:16px}
+#m-code{letter-spacing:.3em;font-family:var(--f-mono);font-size:22px;text-align:center}
+.m-price{display:flex;align-items:baseline;gap:6px;justify-content:center;color:var(--ink-2)}
+.m-price b{font-family:var(--f-mono);font-size:34px;color:var(--ink)}
+.m-state{margin:0;font-weight:600}
+.m-msg{margin:0;font-size:13px;color:var(--warn);min-height:1em}
+.m-foot{display:flex;justify-content:space-between;gap:10px}
+.linkbtn{appearance:none;background:none;border:0;color:var(--accent);font:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:6px 0}
+.m-fine{font-size:12px;color:var(--ink-3);margin:0;text-align:center}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">Ekuphumuleni · Spiritual Capital</div>
+      <h1>TSHK Compass</h1>
+      <div class="toprow"><label class="langsel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg><select id="lang" aria-label="Second language">
+        <option value="zu">isiZulu</option>
+        <option value="pt">Português</option>
+        <option value="ny">Chichewa · Chinyanja</option>
+        <option value="bem">iciBemba</option>
+        <option value="en">English only</option>
+      </select></label><button class="acct" id="acct" type="button" hidden><span id="acct-t">Account</span></button></div>
+    </div>
+    <img class="logo" src="logo.png" alt="The Spiritual Home Kingdom">
+  </header>
+
+  <!-- COMPASS -->
+  <section class="view" id="view-compass">
+    <div class="chips">
+      <span class="chip" id="chip-loc"><span class="dot"></span><span id="chip-loc-t">Location: not set</span></span>
+      <span class="chip" id="chip-cmp"><span class="dot"></span><span id="chip-cmp-t">Compass: off</span></span>
+    </div>
+    <div class="note warnbox inapp" id="inapp" hidden><span><b>For the best compass, open this page in Chrome or Safari</b> (tap ⋮ or ··· then "Open in browser"). <i data-t="inapp"></i></span><a class="btn primary" id="btn-chrome" hidden>Open in Chrome <small data-t="open_chrome" data-pre="· "></small></a></div>
+    <p class="note warnbox" id="calib" hidden><b>Move the phone in a figure‑8 to calibrate the compass.</b> <i data-t="calib"></i></p>
+
+    <div class="dial-wrap" id="dialwrap">
+      <div class="lubber" aria-hidden="true"></div>
+      <div class="dial" id="dial">
+        <svg viewBox="0 0 200 200" id="dialsvg" aria-hidden="true"></svg>
+      </div>
+      <div class="pointer" id="pointer" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
+          <path d="M100 38 L110 80 L100 73 L90 80 Z" fill="var(--accent)"/>
+          <path d="M100 118 L100 160" stroke="var(--tick)" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+        </svg>
+      </div>
+      <div class="hub"><div class="deg" id="hub-deg">—</div><div class="lbl">heading</div></div>
+    </div>
+
+    <div class="state" id="state">
+      <div class="main" id="state-main">Start the compass to begin</div>
+      <div class="sub" id="state-sub"></div>
+    </div>
+
+    <button class="btn primary" id="btn-start">Start compass <small data-t="btn_start" data-pre="· "></small></button>
+    <div class="card" id="suncard" hidden>
+      <h2 id="sun-title">Use the sun <span data-t="sun_title"></span></h2>
+      <p class="note" id="sun-why">This phone is not giving a compass direction, so the app can guide you from the position of the sun instead.</p>
+      <div class="readouts">
+        <div class="ro"><div class="k">Sun now <i data-t="sun_now" data-pre="· "></i></div><div class="v" id="sun-az">—</div></div>
+        <div class="ro"><div class="k">Sun height <i>· above horizon</i></div><div class="v" id="sun-alt">—</div></div>
+        <div class="ro wide"><div class="k">Facing the sun <i data-t="sun_facing" data-pre="· "></i></div><div class="v text" id="sun-turn">—</div></div>
+        <div class="ro wide"><div class="k">Using a stick's shadow <i data-t="sun_shadow" data-pre="· "></i></div><div class="v text" id="sun-shadow">—</div></div>
+      </div>
+      <button class="btn primary" id="btn-suncal" hidden>Set: phone is pointing at the sun <small data-t="btn_suncal" data-pre="· "></small></button>
+      <button class="btn quiet" id="btn-northcal" hidden>Set: phone is pointing north <small data-t="btn_northcal" data-pre="· "></small></button>
+    </div>
+    <div class="note warnbox" id="nocompass" hidden><b>If the compass does not move:</b> open this page in Chrome or Safari, not inside WhatsApp or Facebook; on Android check Chrome › Settings › Site settings › Motion sensors is allowed; move the phone in a figure‑8 to calibrate; keep it away from metal and magnets. Some phones have no compass chip at all: on those, use the sun guidance above or the magnetic bearing with a hand compass. <br><i data-t="nocompass"></i></div>
+
+    <div class="readouts">
+      <div class="ro"><div class="k">Bearing (true) <i data-t="ro_bearing" data-pre="· "></i></div><div class="v" id="ro-bearing">—</div></div>
+      <div class="ro"><div class="k">Distance <i data-t="ro_dist" data-pre="· "></i></div><div class="v" id="ro-dist">—</div></div>
+      <div class="ro"><div class="k">Magnetic bearing <i>· hand compass</i></div><div class="v" id="ro-mag">—</div></div>
+      <div class="ro"><div class="k">Declination <i>· WMM 2025</i></div><div class="v" id="ro-dec">—</div></div>
+      <div class="ro wide"><div class="k">Your location <i data-t="ro_loc" data-pre="· "></i></div><div class="v text" id="ro-loc">Not set · Tap Start, or set it under Location</div></div>
+    </div>
+    <p class="note">The arrow points to Ekuphumuleni. When it sits under the marker at the top, you are facing the spiritual capital. Hold the phone flat and away from metal. <i data-t="note_arrow"></i></p>
+  </section>
+
+  <!-- MSAMO -->
+  <section class="view" id="view-msamo" hidden>
+    <div class="card">
+      <h2>Msamo alignment <span data-t="msamo_title"></span></h2>
+      <ol class="steps">
+        <li><div><b>Start the compass on the Compass tab.</b><span data-t="msamo_s1"></span></div></li>
+        <li><div><b>Lay the phone flat on the msamo, top edge facing the way the msamo faces.</b><span data-t="msamo_s2"></span></div></li>
+        <li><div><b>Turn the msamo until the reading says Aligned.</b><span data-t="msamo_s3"></span></div></li>
+      </ol>
+    </div>
+
+    <div class="big-turn" id="turnbox">
+      <div class="num" id="turn-num">—</div>
+      <div class="say" id="turn-say">Waiting for the compass</div>
+      <div class="say-zu" id="turn-zu"></div>
+      <div class="arrows" id="turn-arrows"><span id="arrow-l">◀ left</span><span>|</span><span id="arrow-r">right ▶</span></div>
+    </div>
+
+    <div class="level">
+      <div class="bubble-box" aria-hidden="true"><div class="bubble" id="bubble"></div></div>
+      <div class="t"><b id="level-t">Level</b><span id="level-s">Keep the phone flat for an accurate reading</span></div>
+    </div>
+    <p class="note">Aligned means within 3° of the true bearing to Ekuphumuleni. The phone vibrates once when alignment is reached. <i data-t="note_aligned"></i></p>
+  </section>
+
+  <!-- LOCATION -->
+  <section class="view" id="view-location" hidden>
+    <div class="card">
+      <h2>Your location <span data-t="ro_loc"></span></h2>
+      <button class="btn primary" id="btn-gps">Use my phone's GPS <small data-t="btn_gps" data-pre="· "></small></button>
+      <p class="note" id="gps-note">GPS gives the most accurate bearing. If it is off or unavailable, choose a town or type coordinates below.</p>
+    </div>
+    <div class="card">
+      <h2>Choose a town <span data-t="town_title"></span></h2>
+      <div class="field"><label for="town">Town / Idolobha</label>
+        <select id="town"><option value="">Select…</option></select></div>
+      <button class="btn quiet" id="btn-town">Use this town <small data-t="btn_town" data-pre="· "></small></button>
+    </div>
+    <div class="card">
+      <h2>Type coordinates <span data-t="coords_title"></span></h2>
+      <div class="row2">
+        <div class="field"><label for="lat">Latitude (south is negative)</label><input id="lat" type="number" step="any" inputmode="decimal" placeholder="-26.2041"></div>
+        <div class="field"><label for="lon">Longitude</label><input id="lon" type="number" step="any" inputmode="decimal" placeholder="28.0473"></div>
+      </div>
+      <button class="btn quiet" id="btn-manual">Use these coordinates <small data-t="btn_manual" data-pre="· "></small></button>
+      <p class="note">Tip: in Google Maps, press and hold your position to see its coordinates.</p>
+    </div>
+  </section>
+
+  <!-- CENTRES -->
+  <section class="view" id="view-centres" hidden>
+    <div class="card map-card">
+      <div id="map" class="map" role="region" aria-label="Map of spiritual centres"></div>
+      <div class="map-note">Pins mark the suburb or town of each centre; tap a pin, then <b>Directions</b>, to be guided to the exact address. The gold pin is Ekuphumuleni. <i data-t="map_note"></i></div>
+    </div>
+    <div class="c-tools">
+      <input id="c-search" type="search" placeholder="Search a centre or town" autocomplete="off" aria-label="Search centres">
+      <button class="btn quiet" id="btn-near" type="button">Nearest <small data-t="btn_near" data-pre="· "></small></button>
+    </div>
+    <p class="note" id="c-status">All centres, grouped by region</p>
+    <div id="c-list"></div>
+  </section>
+
+  <!-- GUIDE -->
+  <section class="view guide" id="view-guide" hidden>
+    <p class="lead">Ekuphumuleni is the designated spiritual capital for AIS spiritual mountain, temple and palace.</p>
+    <div class="coords">29° 04′ 31.7″ S &nbsp; 27° 37′ 28.3″ E<br>Decimal: −29.07547, 27.62453</div>
+    <p>This spiritual, central focal point will be used as the directional reference for spiritually aligning prayer and the spiritual positioning of emisamo yekhaya.</p>
+    <p>TSHK Compass is for Abantwana Bobukhosi Bukamoya (amasosha), the spiritual nation of The Revelation Spiritual Home and The Spiritual Home Kingdom under HSRM Imboni Dr uZwi-Lezwe Radebe. Wherever you are, it shows the direction of Ekuphumuleni so that prayer faces the spiritual capital and the msamo is positioned toward it.</p>
+
+    <h3>How to use it <span data-t="guide_how" data-pre="· "></span></h3>
+    <ol class="steps">
+      <li><div><b>Tap Start compass and allow location and motion access.</b><span data-t="guide_s1"></span></div></li>
+      <li><div><b>Hold the phone flat and turn until the arrow reaches the marker at the top.</b><span data-t="guide_s2"></span></div></li>
+      <li><div><b>For a msamo, open the Msamo tab and follow the turn instruction.</b><span data-t="guide_s3"></span></div></li>
+    </ol>
+
+    <h3>Accuracy <span data-t="guide_acc" data-pre="· "></span></h3>
+    <p>A phone compass reads magnetic north. Across Southern Africa magnetic north sits roughly 17° to 28° west of true north, so the app corrects every reading with the World Magnetic Model (WMM 2025) for your position. If the arrow wanders, move the phone in a figure‑8 a few times and keep it away from metal, magnets and speakers. On iPhone the compass must be allowed each time the page is opened.</p>
+    <p>If your phone has no compass, the app still gives the true bearing and the magnetic bearing to set on a hand compass. Bearings are great‑circle bearings from your position; distances are in kilometres.</p>
+
+    <h3>Languages <span>· isiZulu · Português · Chichewa · iciBemba</span></h3>
+    <p>English is always shown. Use the language selector at the top to place isiZulu, Português (Moçambique), Chichewa/Chinyanja (Malawi and Zambia) or iciBemba (Zambia) beside it. Translations were prepared for the centres in those countries; corrections from speakers there are welcome.</p>
+
+    <h3>Put it on your home screen <span data-t="guide_install" data-pre="· "></span></h3>
+    <p><b>iPhone (Safari):</b> tap Share, then "Add to Home Screen".<br><b>Android (Chrome):</b> tap the ⋮ menu, then "Add to Home screen" or "Install app".</p>
+    <img class="guide-logo" src="logo.png" alt="">
+    <p class="foot">The Revelation Spiritual Home · The Spiritual Home Kingdom</p>
+  </section>
+</div>
+
+<!-- MEMBERSHIP: sign-in, trial, paywall, account (member.js) -->
+<div class="member" id="member" hidden role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="m-card">
+    <div class="m-top"><img class="m-logo" src="logo.png" alt="The Spiritual Home Kingdom">
+      <label class="langsel"><select id="m-lang" aria-label="Language"><option value="zu">isiZulu</option><option value="pt">Português</option><option value="ny">Chichewa · Chinyanja</option><option value="bem">iciBemba</option><option value="en">English only</option></select></label></div>
+    <h2 id="m-title">TSHK Compass</h2>
+    <p class="m-sub" id="m-sub"></p>
+    <form id="m-auth-email" hidden novalidate><label for="m-email" id="m-email-l">Your email address</label><input id="m-email" type="email" autocomplete="email" inputmode="email" required><button class="btn primary" id="m-send" type="submit">Send code</button></form>
+    <form id="m-auth-code" hidden novalidate><label for="m-code" id="m-code-l">6-digit code</label><input id="m-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required><button class="btn primary" id="m-verify" type="submit">Sign in</button><button class="btn quiet" id="m-change" type="button">Use a different email</button></form>
+    <div id="m-account" hidden><p class="m-state" id="m-state"></p></div>
+    <div id="m-pay" hidden><div class="m-price"><b id="m-price">R100</b><span>/ month</span></div><button class="btn primary" id="m-subscribe" type="button">Subscribe</button><p class="m-fine">Secure payment by PayFast · cancel any time</p></div>
+    <button class="btn quiet" id="m-cancel" type="button" hidden>Cancel subscription</button>
+    <button class="btn quiet" id="m-retry" type="button" hidden>Try again</button>
+    <p class="m-msg" id="m-msg" role="status" aria-live="polite"></p>
+    <div class="m-foot"><button class="linkbtn" id="m-signout" type="button" hidden>Sign out</button><button class="linkbtn" id="m-close" type="button" hidden>Close</button></div>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="inner">
+    <button class="tab active" data-view="compass" id="tab-compass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 L13.5 13.5 L8.5 15.5 L10.5 10.5 Z" fill="currentColor" stroke="none"/></svg><b>Compass</b><span data-t="tab_compass"></span></button>
+    <button class="tab" data-view="msamo" id="tab-msamo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="9" width="16" height="10" rx="1.5"/><path d="M8 9V6h8v3M4 14h16"/></svg><b>Msamo</b><span data-t="tab_msamo"></span></button>
+    <button class="tab" data-view="location" id="tab-location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s6-6.2 6-11a6 6 0 0 0-12 0c0 4.8 6 11 6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg><b>Location</b><span data-t="tab_location"></span></button>
+    <button class="tab" data-view="centres" id="tab-centres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2Z"/><path d="M9 4v14M15 6v14"/></svg><b>Centres</b><span data-t="tab_centres"></span></button>
+    <button class="tab" data-view="guide" id="tab-guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H5Z"/><path d="M19 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7Z"/></svg><b>Guide</b><span data-t="tab_guide"></span></button>
+  </div>
+</nav>
+
+<script src="config.js"></script>
+<script src="member.js"></script>
+<script src="geo.js"></script>
+<script src="lang.js"></script>
+<script src="app.js"></script>
+
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").catch(()=>{});});}
+</script>
+</body>
+</html>

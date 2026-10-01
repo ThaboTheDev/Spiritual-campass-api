@@ -1,0 +1,14 @@
+{
+  "name": "tshk-compass-subscription",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test tests/unit/*.test.js",
+    "test:e2e": "node tests/e2e/paywall.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}

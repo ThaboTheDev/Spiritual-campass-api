@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Live 4K map of The Spiritual Home Kingdom's spiritual centres, the HQ and Ekuphumuleni, the spiritual capital.">
+<meta name="theme-color" content="#0b1020">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<title>TSHK Centres Dashboard</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#111a30; --panel-2:#16213b; --line:#2a3653;
+  --ink:#f1f4fb; --ink-2:#b7c1d8; --ink-3:#7a87a6;
+  --land:#1c2740; --land-line:#3a4a70; --sea:#0b1020; --country:#5d6c93;
+  --blue:#4f86e6; --blue-deep:#1f4c9c; --gold:#e2b64a; --gold-soft:rgba(226,182,74,.22); --white:#ffffff;
+  --f-display:"Newsreader",Georgia,serif; --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; --f-mono:"IBM Plex Mono",Menlo,monospace;
+}
+:root[data-theme="light"]{
+  --bg:#f3f4f7; --panel:#ffffff; --panel-2:#e9ecf2; --line:#d5dae3;
+  --ink:#171c2a; --ink-2:#4f5666; --ink-3:#7d8494;
+  --land:#e6e9f0; --land-line:#b9c2d3; --sea:#f3f4f7; --country:#8a94ab;
+  --blue:#1f4c9c; --blue-deep:#1f4c9c; --gold:#b8891f; --gold-soft:rgba(184,137,31,.22); --white:#ffffff;
+}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);overflow:hidden}
+#stage{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+svg{display:block;max-width:100vw;max-height:100vh;width:100%;height:100%}
+.hdr-title{font-family:var(--f-display);font-weight:500;font-size:72px;fill:var(--ink)}
+.hdr-sub{font-family:var(--f-body);font-weight:500;font-size:28px;letter-spacing:.18em;fill:var(--ink-3)}
+.clock{font-family:var(--f-mono);font-size:64px;font-weight:500;fill:var(--ink)}
+.date{font-family:var(--f-body);font-size:28px;fill:var(--ink-2)}
+.stat-n{font-family:var(--f-mono);font-size:56px;font-weight:500;fill:var(--gold)}
+.stat-l{font-family:var(--f-body);font-size:22px;letter-spacing:.14em;fill:var(--ink-3)}
+.land{fill:var(--land);stroke:var(--land-line);stroke-width:1.5}
+.border{fill:none;stroke:var(--land-line);stroke-width:1.5}
+.country{font-family:var(--f-body);font-weight:600;font-size:34px;letter-spacing:.22em;fill:var(--country);text-anchor:middle;pointer-events:none}
+.pin{fill:var(--blue);stroke:var(--white);stroke-width:3}
+.lbl{font-family:var(--f-body);font-weight:600;font-size:27px;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:7px;stroke-linejoin:round}
+.lbl.small{font-size:24px}
+.lbl.hq{fill:var(--gold);font-size:30px}
+.lbl.cap{fill:var(--gold);font-family:var(--f-display);font-weight:600;font-size:40px;letter-spacing:.02em}
+.lbl.cap2{fill:var(--gold);font-size:24px;font-weight:500;letter-spacing:.16em}
+.leader{stroke:var(--ink-3);stroke-width:1.5;fill:none;opacity:.8}
+.cluster{fill:var(--gold);font-family:var(--f-body);font-weight:600;font-size:26px;paint-order:stroke;stroke:var(--bg);stroke-width:7px;stroke-linejoin:round}
+.inset-frame{fill:var(--panel);stroke:var(--line);stroke-width:2}
+.inset-title{font-family:var(--f-display);font-weight:500;font-size:40px;fill:var(--ink)}
+.inset-sub{font-family:var(--f-body);font-size:22px;letter-spacing:.14em;fill:var(--ink-3)}
+.region-name{font-family:var(--f-body);font-size:26px;font-weight:500;fill:var(--ink-2)}
+.region-n{font-family:var(--f-mono);font-size:26px;fill:var(--ink);text-anchor:end}
+.foot{font-family:var(--f-body);font-size:22px;fill:var(--ink-3)}
+.legend-t{font-family:var(--f-body);font-size:24px;fill:var(--ink-2)}
+.halo{fill:var(--gold);opacity:.35;transform-origin:center;transform-box:fill-box}
+@keyframes pulse{0%{transform:scale(1);opacity:.45}100%{transform:scale(2.4);opacity:0}}
+.live .halo{animation:pulse 2.6s ease-out infinite}
+@media (prefers-reduced-motion: reduce){.live .halo{animation:none}}
+.link-box{fill:var(--panel);stroke:var(--line);stroke-width:2}
+.livedot{fill:#3ddc84}
+.live .livedot{animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.pin,.hqpin,.capstar,.clusterhit{cursor:pointer}
+#tip{position:fixed;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:clamp(13px,1.1vw,22px);line-height:1.4;max-width:min(38vw,560px);box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;transition:opacity .12s;z-index:5}
+#tip b{font-family:var(--f-display);font-weight:500;font-size:1.35em;display:block;margin-bottom:2px}
+#tip .k{color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-size:.75em;font-weight:600}
+#tip .a{color:var(--ink-2)}
+#ctl{position:fixed;left:1.2vw;bottom:2.4vh;display:flex;gap:.5vw;align-items:center;z-index:4}
+#ctl button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 clamp(14px,1.1vw,24px) var(--f-body);width:clamp(36px,2.6vw,56px);height:clamp(36px,2.6vw,56px);border-radius:10px;cursor:pointer}
+#ctl button:hover{border-color:var(--gold);color:var(--gold)}
+#ctl .hint{color:var(--ink-3);font-size:clamp(11px,.85vw,19px);margin-left:.6vw}
+#ctl button.wide{width:auto;padding:0 clamp(10px,.8vw,18px)}
+#pop{position:fixed;background:var(--panel);color:var(--ink);border:1px solid var(--gold);border-radius:14px;padding:clamp(12px,1vw,22px) clamp(14px,1.2vw,26px);font-size:clamp(14px,1.15vw,24px);line-height:1.4;width:min(40vw,640px);box-shadow:0 14px 40px rgba(0,0,0,.5);z-index:6;display:none}
+#pop.show{display:block}
+#pop b{font-family:var(--f-display);font-weight:500;font-size:1.5em;display:block;margin:2px 0 4px;padding-right:1.6em}
+#pop .k{color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-size:.72em;font-weight:600}
+#pop .a{color:var(--ink-2)}
+#pop .tel{color:var(--ink);font-family:var(--f-mono);margin-top:.3em;display:block}
+#pop .acts{display:flex;gap:.5em;margin-top:.8em;flex-wrap:wrap}
+#pop .acts a{display:inline-block;padding:.45em .9em;border-radius:9px;background:var(--gold);color:#1a1200;text-decoration:none;font-weight:600;font-size:.85em}
+#pop .acts a.q{background:var(--panel-2);color:var(--ink)}
+#pop .x{position:absolute;top:.5em;right:.6em;appearance:none;border:0;background:none;color:var(--ink-3);font-size:1.4em;cursor:pointer;line-height:1}
+#pop .x:hover{color:var(--gold)}
+.pin.sel{stroke:var(--gold);stroke-width:5}
+.paneltab{cursor:pointer}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="tip"></div>
+<div id="pop" role="dialog" aria-live="polite"><button class="x" id="popx" aria-label="Close">×</button><span class="k" id="pk"></span><b id="pn"></b><div class="a" id="pa"></div><a class="tel" id="pt" href="#"></a><div class="acts"><a id="pdir" target="_blank" rel="noopener">Directions</a><a class="q" id="pcall" href="#">Call</a><a class="q" id="pzoom" href="#">Zoom here</a></div></div>
+<div id="ctl"><button id="zin" title="Zoom in">+</button><button id="zout" title="Zoom out">−</button><button id="zreset" title="Reset view">⟲</button><button id="panelbtn" class="wide" title="Show or hide the regions panel">Hide regions</button><span class="hint">Drag to move · scroll or pinch to zoom · click a pin for its details · click a counter or an inset to zoom there</span></div>
+<script>
+/* Members only: the centre list comes from /api/centres using the sign-in saved by the app in this browser.
+   Open the app once on this screen's browser and sign in; the dashboard then works until the session expires. */
+var REGIONS=[],CENTRES=[];
+(async function loadCentres(){
+  const msg=t=>{document.getElementById("stage").innerHTML=`<p style="font:500 clamp(16px,2vw,40px) system-ui;color:#b7c1d8;max-width:70ch;text-align:center;padding:4vw">${t}</p>`;};
+  let s=null;try{s=JSON.parse(localStorage.getItem("tshk-session")||"null");}catch(e){}
+  if(!s){msg('Sign in to TSHK Compass in this browser first (open <a style="color:#e2b64a" href="/">the app</a>), then reload this page.');return;}
+  try{
+    let r=await fetch("/api/centres",{headers:{Authorization:"Bearer "+s.access_token}});
+    if(r.status===401){msg('Your sign-in has expired. Open <a style="color:#e2b64a" href="/">the app</a> once to refresh it, then reload this page.');return;}
+    if(r.status===402){msg("A TSHK Compass membership is needed to show the centres dashboard.");return;}
+    const data=await r.json();REGIONS=data.regions;CENTRES=data.centres;window.__startDashboard();
+  }catch(e){msg("Could not load the centres. Check the internet connection and reload.");}
+})();
+</script>
+<script>
+window.__startDashboard=function(){
+const W=3840,H=2160;
+const q=new URLSearchParams(location.search);
+if(q.get("theme")==="light")document.documentElement.dataset.theme="light";
+const LIVE=q.get("static")!=="1"; if(LIVE)document.documentElement.classList.add("live");
+const TARGET={lat:-29.07547,lon:27.62453};
+const HQ_NAME="eBhubesini";
+const ATLAS=q.get("atlas")||"https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json";
+let panelOpen=q.get("panel")!=="0"; try{if(!q.has("panel")&&localStorage.getItem("tshk-panel")==="0")panelOpen=false;}catch(e){}
+
+const svg=d3.select("#stage").append("svg").attr("viewBox",`0 0 ${W} ${H}`).attr("preserveAspectRatio","xMidYMid meet");
+svg.append("rect").attr("width",W).attr("height",H).attr("fill","var(--bg)");
+
+/* ---------- Header ---------- */
+const hdr=svg.append("g");
+hdr.append("image").attr("href","logo.png").attr("x",70).attr("y",34).attr("width",150).attr("height",136);
+hdr.append("text").attr("class","hdr-title").attr("x",250).attr("y",102).text("The Spiritual Home Kingdom · Spiritual Centres");
+hdr.append("text").attr("class","hdr-sub").attr("x",254).attr("y",150).text("EKUPHUMULENI · SPIRITUAL CAPITAL · THE REVELATION SPIRITUAL HOME");
+const clock=hdr.append("text").attr("class","clock").attr("x",W-70).attr("y",100).attr("text-anchor","end");
+const dateT=hdr.append("text").attr("class","date").attr("x",W-70).attr("y",148).attr("text-anchor","end");
+hdr.append("circle").attr("class","livedot").attr("cx",W-70-560).attr("cy",80).attr("r",9);
+hdr.append("text").attr("class","stat-l").attr("x",W-70-542).attr("y",88).text("LIVE");
+function tick(){const d=new Date();clock.text(d.toLocaleTimeString("en-ZA",{hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Africa/Johannesburg"}));dateT.text(d.toLocaleDateString("en-ZA",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"Africa/Johannesburg"})+" · SAST");}
+tick(); if(LIVE)setInterval(tick,1000);
+hdr.append("line").attr("x1",70).attr("x2",W-70).attr("y1",196).attr("y2",196).attr("stroke","var(--line)").attr("stroke-width",2);
+const inSA=r=>/Gauteng|KwaZulu|Eastern Cape|Western Cape|Mpumalanga|North West/.test(r);
+const nCountries=new Set(CENTRES.map(c=>inSA(c.r)?"South Africa":c.r)).size;
+const stats=[[CENTRES.length,"CENTRES"],[REGIONS.length,"REGIONS"],[nCountries,"COUNTRIES"]];
+stats.forEach((s,i)=>{const g=hdr.append("g").attr("transform",`translate(${1900+i*300},60)`);g.append("text").attr("class","stat-n").attr("y",56).text(s[0]);g.append("text").attr("class","stat-l").attr("y",96).text(s[1]);});
+const scene=svg.append("g");
+
+/* ---------- Geometry helpers ---------- */
+function starPath(R,n,ratio){let d="";for(let i=0;i<2*n;i++){const r=i%2?R*ratio:R;const a=-Math.PI/2+i*Math.PI/n;d+=(i?"L":"M")+(r*Math.cos(a)).toFixed(2)+" "+(r*Math.sin(a)).toFixed(2);}return d+"Z";}
+const STAR9=R=>starPath(R,9,0.56);
+function makeProj(box,lonMin,latMin,lonMax,latMax){
+  const p=d3.geoMercator();
+  p.fitExtent([[box.x,box.y],[box.x+box.w,box.y+box.h]],{type:"Polygon",coordinates:[[[lonMin,latMin],[lonMin,latMax],[lonMax,latMax],[lonMax,latMin],[lonMin,latMin]]]});
+  return p;
+}
+function drawLand(g,proj,land,borders,clipId,box){
+  scene.append("clipPath").attr("id",clipId).append("rect").attr("x",box.x).attr("y",box.y).attr("width",box.w).attr("height",box.h);
+  const path=d3.geoPath(proj);
+  const gg=g.append("g").attr("clip-path",`url(#${clipId})`);
+  const inner=gg.append("g");
+  inner.append("path").datum(land).attr("class","land").attr("d",path);
+  inner.append("path").datum(borders).attr("class","border").attr("d",path);
+  return {gg,inner};
+}
+/* label placement with collision avoidance; pr maps [lon,lat] to screen */
+function placeLabels(g,items,pr,box,opts){
+  const size=opts.size||27,pad=6,taken=opts.taken||[];
+  const cw=size*0.58;
+  const rectsOverlap=(a,b)=>!(a.x2<b.x1||a.x1>b.x2||a.y2<b.y1||a.y1>b.y2);
+  const inBox=r=>r.x1>=box.x+4&&r.x2<=box.x+box.w-4&&r.y1>=box.y+4&&r.y2<=box.y+box.h-4;
+  const inView=(x,y)=>x>=box.x-40&&x<=box.x+box.w+40&&y>=box.y-40&&y<=box.y+box.h+40;
+  items.forEach(it=>{const [x,y]=pr([it.lo,it.la]);it.x=x;it.y=y;if(inView(x,y))taken.push({x1:x-12,x2:x+12,y1:y-12,y2:y+12});});
+  const cands=(x,y,w,h,r)=>[
+    {x1:x+r+8,y1:y-h/2,anchor:"start",dx:r+8},
+    {x1:x-r-8-w,y1:y-h/2,anchor:"end",dx:-r-8},
+    {x1:x-w/2,y1:y-r-8-h,anchor:"middle",dx:0},
+    {x1:x-w/2,y1:y+r+8,anchor:"middle",dx:0},
+    {x1:x+r+4,y1:y-r-h,anchor:"start",dx:r+4},
+    {x1:x+r+4,y1:y+r,anchor:"start",dx:r+4},
+    {x1:x-r-4-w,y1:y-r-h,anchor:"end",dx:-r-4},
+    {x1:x-r-4-w,y1:y+r,anchor:"end",dx:-r-4},
+    {x1:x+r+40,y1:y-h/2-30,anchor:"start",dx:r+40,leader:true},
+    {x1:x-r-40-w,y1:y-h/2+30,anchor:"end",dx:-r-40,leader:true},
+    {x1:x+r+60,y1:y+40,anchor:"start",dx:r+60,leader:true},
+    {x1:x-r-60-w,y1:y-40-h,anchor:"end",dx:-r-60,leader:true},
+    {x1:x-w/2,y1:y-r-70-h,anchor:"middle",dx:0,leader:true},
+    {x1:x-w/2,y1:y+r+70,anchor:"middle",dx:0,leader:true},
+    {x1:x+r+110,y1:y-h/2,anchor:"start",dx:r+110,leader:true},
+    {x1:x-r-110-w,y1:y-h/2,anchor:"end",dx:-r-110,leader:true},
+    {x1:x+r+120,y1:y-90-h,anchor:"start",dx:r+120,leader:true},
+    {x1:x-r-120-w,y1:y+90,anchor:"end",dx:-r-120,leader:true},
+    {x1:x+r+120,y1:y+90,anchor:"start",dx:r+120,leader:true},
+    {x1:x-r-120-w,y1:y-90-h,anchor:"end",dx:-r-120,leader:true},
+    {x1:x+r+170,y1:y-h/2,anchor:"start",dx:r+170,leader:true},
+    {x1:x-r-170-w,y1:y-h/2,anchor:"end",dx:-r-170,leader:true},
+    {x1:x-w/2,y1:y+r+130,anchor:"middle",dx:0,leader:true},
+    {x1:x-w/2,y1:y-r-130-h,anchor:"middle",dx:0,leader:true}
+  ];
+  items.sort((a,b)=>a.y-b.y||a.x-b.x);
+  for(const it of items){
+    if(!inView(it.x,it.y))continue;
+    const w=it.label.length*cw+pad*2,h=size+pad,r=it.rad||11;
+    let chosen=null;
+    for(const c of cands(it.x,it.y,w,h,r)){const rect={x1:c.x1,y1:c.y1,x2:c.x1+w,y2:c.y1+h};if(inBox(rect)&&!taken.some(t=>rectsOverlap(t,rect))){chosen={...c,rect};break;}}
+    if(!chosen){const c=cands(it.x,it.y,w,h,r)[0];chosen={...c,rect:{x1:c.x1,y1:c.y1,x2:c.x1+w,y2:c.y1+h}};}
+    taken.push(chosen.rect);
+    if(chosen.leader){const lx=chosen.anchor==="start"?chosen.rect.x1-4:chosen.anchor==="end"?chosen.rect.x2+4:(chosen.rect.x1+chosen.rect.x2)/2;const ly=chosen.anchor==="middle"?(chosen.rect.y1<it.y?chosen.rect.y2+2:chosen.rect.y1-2):chosen.rect.y1+h/2;g.append("line").attr("class","leader").attr("x1",it.x).attr("y1",it.y).attr("x2",lx).attr("y2",ly);}
+    g.append("text").attr("class","lbl"+(it.cls?" "+it.cls:"")+(opts.small?" small":"")).attr("x",it.x+chosen.dx).attr("y",chosen.rect.y1+h/2).attr("dominant-baseline","central").attr("text-anchor",chosen.anchor).text(it.label);
+  }
+  return taken;
+}
+/* hover tooltip */
+const tip=document.getElementById("tip");
+function showTip(ev,c){if(pop.classList.contains("show"))return;tip.innerHTML=`<span class="k">${c.n===HQ_NAME?"Headquarters":c.r}</span><b>${c.n}</b><span class="a">${c.a}</span>`;moveTip(ev);tip.style.opacity=1;}
+function moveTip(ev){const pad=18;let x=ev.clientX+pad,y=ev.clientY+pad;const r=tip.getBoundingClientRect();if(x+r.width>innerWidth-10)x=ev.clientX-r.width-pad;if(y+r.height>innerHeight-10)y=ev.clientY-r.height-pad;tip.style.left=x+"px";tip.style.top=y+"px";}
+function hideTip(){tip.style.opacity=0;}
+/* click popup: name, address, contacts */
+const pop=document.getElementById("pop");
+let selPin=null,zoomToCentre=null;
+function showPop(ev,c){
+  ev.stopPropagation();hideTip();
+  document.getElementById("pk").textContent=c.n===HQ_NAME?"Headquarters · "+c.r:c.r;
+  document.getElementById("pn").textContent=c.n;
+  document.getElementById("pa").textContent=c.a;
+  const t=document.getElementById("pt"),call=document.getElementById("pcall");
+  if(c.p){t.textContent=c.p;t.href="tel:"+c.p.replace(/[^+\d]/g,"");t.style.display="block";call.href=t.href;call.style.display="inline-block";}else{t.style.display="none";call.style.display="none";}
+  document.getElementById("pdir").href=c.dir||`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.a)}`;
+  const z=document.getElementById("pzoom");z.style.display=c.noZoom?"none":"inline-block";z.onclick=e=>{e.preventDefault();if(zoomToCentre)zoomToCentre(c);};
+  if(selPin)selPin.classList.remove("sel");selPin=ev.currentTarget;if(selPin&&selPin.classList)selPin.classList.add("sel");
+  pop.classList.add("show");
+  const pad=22;let x=ev.clientX+pad,y=ev.clientY-40;const r=pop.getBoundingClientRect();if(x+r.width>innerWidth-12)x=ev.clientX-r.width-pad;if(y+r.height>innerHeight-12)y=innerHeight-r.height-12;if(y<12)y=12;pop.style.left=x+"px";pop.style.top=y+"px";
+}
+function hidePop(){pop.classList.remove("show");if(selPin&&selPin.classList)selPin.classList.remove("sel");selPin=null;}
+document.getElementById("popx").onclick=hidePop;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")hidePop();});
+svg.on("click",()=>hidePop());
+function bindPin(sel,c){sel.on("pointerenter",ev=>showTip(ev,c)).on("pointermove",moveTip).on("pointerleave",hideTip).on("click",ev=>showPop(ev,c));}
+function drawPins(g,items,pr){
+  for(const it of items){
+    const [x,y]=pr([it.lo,it.la]);let el;
+    if(it.kind==="hq"){
+      g.append("circle").attr("cx",x).attr("cy",y).attr("r",26).attr("fill","none").attr("stroke","var(--gold)").attr("stroke-width",4);
+      el=g.append("circle").attr("class","pin hqpin").attr("cx",x).attr("cy",y).attr("r",13).attr("fill","var(--gold)").attr("stroke","var(--white)").attr("stroke-width",3);
+    }else el=g.append("circle").attr("class","pin").attr("cx",x).attr("cy",y).attr("r",11);
+    bindPin(el,it);
+  }
+}
+const CAPITAL={n:"Ekuphumuleni",r:"Spiritual Capital",a:"29°04′31.7″S 27°37′28.3″E · the directional reference for spiritually aligning prayer and the spiritual positioning of emisamo yekhaya",p:"",lo:TARGET.lon,la:TARGET.lat,dir:`https://www.google.com/maps/dir/?api=1&destination=${TARGET.lat},${TARGET.lon}`};
+function drawCapital(g,pr,scale){
+  const [x,y]=pr([TARGET.lon,TARGET.lat]);const s=scale||1;
+  g.append("circle").attr("class","halo").attr("cx",x).attr("cy",y).attr("r",30*s);
+  const el=g.append("path").attr("class","capstar").attr("d",STAR9(36*s)).attr("transform",`translate(${x},${y})`).attr("fill","var(--gold)").attr("stroke","var(--white)").attr("stroke-width",3);
+  bindPin(el,CAPITAL);
+  return [x,y];
+}
+
+/* ---------- Data groupings ---------- */
+const gauteng=c=>c.r==="Gauteng";
+const capeTown=c=>c.r.startsWith("Emangalisweni")&&c.lo>18.3&&c.lo<19.1&&c.la<-33.5;
+const durban=c=>c.r.startsWith("Emazweni")&&c.lo>30.8&&c.lo<31.1&&c.la<-29.6&&c.la>-30.1;
+const gqeberha=c=>c.r.startsWith("Ezenzweni")&&c.lo>25.3&&c.lo<25.7&&c.la<-33.7;
+const eastLondon=c=>c.r.startsWith("Ezenzweni")&&c.lo>27.3&&c.lo<28.0&&c.la<-32.8;
+const overseas=c=>c.la>0;
+const inInset=c=>gauteng(c)||capeTown(c)||durban(c)||gqeberha(c)||eastLondon(c);
+const clusters=[{name:"GAUTENG",f:gauteng,lo:28.1,la:-26.1,inset:"A",bounds:[27.55,-26.68,28.68,-25.28]},{name:"CAPE TOWN",f:capeTown,lo:18.62,la:-33.9,inset:"B",bounds:[18.2,-34.3,19.2,-33.4]},{name:"DURBAN",f:durban,lo:30.98,la:-29.85,inset:"C",bounds:[30.72,-30.12,31.2,-29.58]},{name:"GQEBERHA",f:gqeberha,lo:25.55,la:-33.9,inset:"D",bounds:[25.25,-34.05,25.85,-33.6]},{name:"EAST LONDON",f:eastLondon,lo:27.85,la:-32.95,inset:"E",bounds:[27.2,-33.12,28.1,-32.7]}];
+const cn=[["SOUTH AFRICA",21.9,-30.3,34],["NAMIBIA",18.6,-23.5,34],["BOTSWANA",23.6,-22.6,34],["ZIMBABWE",29.9,-19.4,34],["MOZAMBIQUE",35.3,-19.0,34],["ZAMBIA",28.2,-15.7,34],["MALAWI",33.7,-13.9,34],["LESOTHO",28.25,-30.3,22],["ESWATINI",31.75,-27.08,22],["MADAGASCAR",46.6,-19.5,34],["ANGOLA",17.5,-14.2,34],["TANZANIA",35.5,-8.5,34],["DR CONGO",23.5,-8.5,34]];
+let TOPO=null;
+
+/* ---------- Scene (rebuilt when the regions panel is shown or hidden) ---------- */
+function buildScene(){
+  scene.selectAll("*").remove();hidePop();
+  const land=topojson.merge(TOPO,TOPO.objects.countries.geometries);
+  const borders=topojson.mesh(TOPO,TOPO.objects.countries,(a,b)=>a!==b);
+  const MAIN=panelOpen?{x:70,y:230,w:1700,h:1820}:{x:70,y:230,w:3700,h:1820};
+  const SIDE={x:1810,y:230,w:1960};
+  const bounds=panelOpen?[17.2,-35.2,37.2,-15.2]:[5,-35.2,49.5,-15.2];
+
+  const gm=scene.append("g");
+  const proj=makeProj(MAIN,...bounds);
+  const {gg:mainClip,inner:landG}=drawLand(gm,proj,land,borders,"clipMain",MAIN);
+  const gc=mainClip.append("g");
+  const gp=mainClip.append("g");
+  gm.append("rect").attr("x",MAIN.x).attr("y",MAIN.y).attr("width",MAIN.w).attr("height",MAIN.h).attr("fill","none").attr("stroke","var(--line)").attr("stroke-width",2);
+  let T=d3.zoomIdentity,lastT=d3.zoomIdentity;
+  const pr=ll=>T.apply(proj(ll));
+  const inMain=(x,y)=>x>MAIN.x&&x<MAIN.x+MAIN.w&&y>MAIN.y&&y<MAIN.y+MAIN.h;
+  function renderMain(){
+    lastT=T;gc.attr("transform",null);gp.attr("transform",null);
+    gc.selectAll("*").remove();gp.selectAll("*").remove();
+    for(const [n,lo,la,fs] of cn){const [x,y]=pr([lo,la]);if(inMain(x,y))gc.append("text").attr("class","country").style("font-size",fs+"px").attr("x",x).attr("y",y).text(n);}
+    const expanded=T.k>=(panelOpen?3.2:2.2);
+    const mainItems=CENTRES.filter(c=>!overseas(c)&&(expanded||!inInset(c))).map(c=>({...c,label:c.n===HQ_NAME?c.n+" · HQ":c.n,kind:c.n===HQ_NAME?"hq":"pin",cls:c.n===HQ_NAME?"hq":"",rad:c.n===HQ_NAME?28:11}));
+    const taken=[];
+    if(!expanded){
+      for(const cl of clusters){const [x,y]=pr([cl.lo,cl.la]);if(!inMain(x,y))continue;const n=CENTRES.filter(cl.f).length;
+        const g=gp.append("g").attr("class","clusterhit").on("click",ev=>{ev.stopPropagation();zoomToBounds(cl.bounds);});
+        g.append("circle").attr("cx",x).attr("cy",y).attr("r",34).attr("fill","var(--gold-soft)").attr("stroke","var(--gold)").attr("stroke-width",3).attr("stroke-dasharray","10 8");
+        g.append("text").attr("class","cluster").attr("x",x).attr("y",y+1).attr("text-anchor","middle").attr("dominant-baseline","central").text(n);
+        const txt=panelOpen?`${cl.name} · ${n} centres · inset ${cl.inset}`:`${cl.name} · ${n} centres`;
+        g.append("text").attr("class","cluster").attr("x",x+46).attr("y",y).attr("dominant-baseline","central").text(txt);
+        taken.push({x1:x-36,y1:y-36,x2:x+46+txt.length*15.5+8,y2:y+36});
+      }
+    }
+    drawPins(gp,mainItems,pr);
+    const [cx,cy]=drawCapital(gp,pr,1);
+    if(inMain(cx,cy)){
+      gp.append("text").attr("class","lbl cap").attr("x",cx-46).attr("y",cy-6).attr("text-anchor","end").text("EKUPHUMULENI");
+      gp.append("text").attr("class","lbl cap2").attr("x",cx-48).attr("y",cy+30).attr("text-anchor","end").text("SPIRITUAL CAPITAL · 29°04′31.7″S 27°37′28.3″E");
+      taken.push({x1:cx-48-700,y1:cy-44,x2:cx+40,y2:cy+50});
+    }
+    placeLabels(gp,mainItems,pr,MAIN,{taken,size:expanded?25:27});
+  }
+  const zoom=d3.zoom().scaleExtent([1,20]).extent([[MAIN.x,MAIN.y],[MAIN.x+MAIN.w,MAIN.y+MAIN.h]]).translateExtent([[MAIN.x,MAIN.y],[MAIN.x+MAIN.w,MAIN.y+MAIN.h]])
+    .on("zoom",ev=>{T=ev.transform;landG.attr("transform",T).selectAll("path").attr("stroke-width",1.5/T.k);hideTip();hidePop();
+      const k=T.k/lastT.k,rel=`translate(${T.x-k*lastT.x},${T.y-k*lastT.y}) scale(${k})`;gp.attr("transform",rel);gc.attr("transform",rel);})
+    .on("end",()=>{if(T!==lastT)renderMain();});
+  gm.call(zoom).on("dblclick.zoom",null);
+  gm.on("dblclick",ev=>{const [x,y]=d3.pointer(ev,svg.node());gm.transition().duration(500).call(zoom.scaleBy,2,[x,y]);});
+  function zoomToBounds(b){const [[x0,y0],[x1,y1]]=[proj([b[0],b[3]]),proj([b[2],b[1]])];const k=Math.min(20,0.9/Math.max((x1-x0)/MAIN.w,(y1-y0)/MAIN.h));const tx=MAIN.x+MAIN.w/2-k*(x0+x1)/2,ty=MAIN.y+MAIN.h/2-k*(y0+y1)/2;gm.transition().duration(900).call(zoom.transform,d3.zoomIdentity.translate(tx,ty).scale(k));}
+  zoomToCentre=c=>{const d=0.12;zoomToBounds([c.lo-d,c.la-d*0.8,c.lo+d,c.la+d*0.8]);};
+  document.getElementById("zin").onclick=()=>gm.transition().duration(400).call(zoom.scaleBy,1.7);
+  document.getElementById("zout").onclick=()=>gm.transition().duration(400).call(zoom.scaleBy,1/1.7);
+  document.getElementById("zreset").onclick=()=>gm.transition().duration(700).call(zoom.transform,d3.zoomIdentity);
+  renderMain();
+
+  /* Legend (floats over the map) */
+  const lg=scene.append("g").attr("transform",`translate(${MAIN.x+30},${MAIN.y+60})`);
+  lg.append("rect").attr("class","link-box").attr("x",-16).attr("y",-30).attr("width",720).attr("height",132).attr("rx",12);
+  const rows=[["cap","Ekuphumuleni · Spiritual Capital"],["hq","Headquarters · "+HQ_NAME],["pin","Spiritual centre"]];
+  rows.forEach((r,i)=>{const y=i*40;
+    if(r[0]==="cap"){lg.append("path").attr("d",STAR9(17)).attr("transform",`translate(16,${y})`).attr("fill","var(--gold)").attr("stroke","var(--white)").attr("stroke-width",2);}
+    else if(r[0]==="hq"){lg.append("circle").attr("cx",16).attr("cy",y).attr("r",14).attr("fill","none").attr("stroke","var(--gold)").attr("stroke-width",3);lg.append("circle").attr("cx",16).attr("cy",y).attr("r",7).attr("fill","var(--gold)");}
+    else lg.append("circle").attr("class","pin").attr("cx",16).attr("cy",y).attr("r",9);
+    lg.append("text").attr("class","legend-t").attr("x",46).attr("y",y).attr("dominant-baseline","central").text(r[1]);
+  });
+
+  /* Overseas mini insets */
+  const ov=[{name:"Newbridge, Ireland",c:CENTRES.find(c=>c.n==="Newbridge"),bounds:[-11,51.3,-5,55.6]},{name:"Georgia, USA",c:CENTRES.find(c=>c.n==="Georgia (Atlanta)"),bounds:[-86.5,30.2,-80.5,35.4]}];
+  const ow=panelOpen?560:400,oh=panelOpen?480:340,oy=panelOpen?SIDE.y+1340:MAIN.y+MAIN.h-oh-30,ox=panelOpen?SIDE.x:MAIN.x+MAIN.w-2*ow-50;
+  ov.forEach((o,i)=>{
+    const box={x:ox+i*(ow+20),y:oy,w:ow,h:oh};
+    const g=scene.append("g");
+    g.append("rect").attr("class","inset-frame").attr("x",box.x).attr("y",box.y).attr("width",box.w).attr("height",box.h).attr("rx",14);
+    const mb={x:box.x+12,y:box.y+12,w:box.w-24,h:box.h-70};
+    const p=makeProj(mb,...o.bounds);
+    const {gg}=drawLand(g,p,land,borders,"clipO"+i,mb);
+    if(o.c){const [x,y]=p([o.c.lo,o.c.la]);bindPin(gg.append("circle").attr("class","pin").attr("cx",x).attr("cy",y).attr("r",11),{...o.c,noZoom:true});}
+    g.append("text").attr("class","lbl small").attr("x",box.x+20).attr("y",box.y+box.h-24).text(o.name+(o.c?"  ·  "+o.c.n:""));
+  });
+
+  /* Panel tab on the map edge */
+  const tab=scene.append("g").attr("class","paneltab").on("click",ev=>{ev.stopPropagation();togglePanel();});
+  const tx=MAIN.x+MAIN.w-54,ty=MAIN.y+MAIN.h/2-90;
+  tab.append("rect").attr("x",tx).attr("y",ty).attr("width",54).attr("height",180).attr("rx",10).attr("fill","var(--panel)").attr("stroke","var(--line)").attr("stroke-width",2);
+  tab.append("text").attr("class","stat-l").attr("transform",`translate(${tx+34},${ty+90}) rotate(-90)`).attr("text-anchor","middle").attr("dominant-baseline","central").style("font-size","20px").text(panelOpen?"HIDE REGIONS ▶":"◀ SHOW REGIONS");
+
+  if(!panelOpen)return;
+
+  /* Side panel: city insets (click to zoom the main map there) */
+  const insets=[
+    {id:"A",title:"Gauteng",sub:"INSET A · JOHANNESBURG · PRETORIA · VAAL · EAST RAND",box:{x:SIDE.x,y:SIDE.y,w:1130,h:720},filter:gauteng},
+    {id:"B",title:"Cape Town",sub:"INSET B · EMANGALISWENI",box:{x:SIDE.x+1160,y:SIDE.y,w:800,h:720},filter:capeTown},
+    {id:"C",title:"Durban",sub:"INSET C · EMAZWENI · ETHEKWINI",box:{x:SIDE.x,y:SIDE.y+750,w:640,h:560},filter:durban},
+    {id:"D",title:"Gqeberha",sub:"INSET D · EZENZWENI · NELSON MANDELA BAY",box:{x:SIDE.x+660,y:SIDE.y+750,w:640,h:560},filter:gqeberha},
+    {id:"E",title:"East London",sub:"INSET E · EZENZWENI · BUFFALO CITY",box:{x:SIDE.x+1320,y:SIDE.y+750,w:640,h:560},filter:eastLondon}
+  ];
+  insets.forEach(ins=>{
+    const bounds=clusters.find(c=>c.inset===ins.id).bounds;
+    const g=scene.append("g").style("cursor","pointer").on("click",ev=>{ev.stopPropagation();zoomToBounds(bounds);});
+    g.append("rect").attr("class","inset-frame").attr("x",ins.box.x).attr("y",ins.box.y).attr("width",ins.box.w).attr("height",ins.box.h).attr("rx",14);
+    g.append("text").attr("class","inset-title").attr("x",ins.box.x+28).attr("y",ins.box.y+52).text(ins.title);
+    g.append("text").attr("class","inset-sub").attr("x",ins.box.x+28).attr("y",ins.box.y+86).text(ins.sub);
+    const mb={x:ins.box.x+18,y:ins.box.y+104,w:ins.box.w-36,h:ins.box.h-122};
+    const p=makeProj(mb,...bounds);
+    const {gg}=drawLand(g,p,land,borders,"clip"+ins.id,mb);
+    gg.append("rect").attr("x",mb.x).attr("y",mb.y).attr("width",mb.w).attr("height",mb.h).attr("fill","none").attr("stroke","var(--line)").attr("stroke-width",1.5);
+    const items=CENTRES.filter(ins.filter).map(c=>({...c,label:c.n===HQ_NAME?c.n+" · HQ":c.n,kind:c.n===HQ_NAME?"hq":"pin",cls:c.n===HQ_NAME?"hq":"",rad:c.n===HQ_NAME?28:11}));
+    const gi=g.append("g").attr("clip-path",`url(#clip${ins.id})`);
+    drawPins(gi,items,p);
+    placeLabels(gi,items,p,mb,{size:26,small:true});
+  });
+  /* Region tally */
+  const tb={x:SIDE.x+1160,y:SIDE.y+1340,w:800,h:480};
+  const tg=scene.append("g");
+  tg.append("rect").attr("class","inset-frame").attr("x",tb.x).attr("y",tb.y).attr("width",tb.w).attr("height",tb.h).attr("rx",14);
+  tg.append("text").attr("class","inset-title").attr("x",tb.x+28).attr("y",tb.y+52).text("Centres by region");
+  const counts=REGIONS.map(r=>[r,CENTRES.filter(c=>c.r===r).length]).filter(x=>x[1]>0);
+  const colH=counts.length>8?2:1,per=Math.ceil(counts.length/colH),cw=(tb.w-56)/colH;
+  counts.forEach(([r,n],i)=>{const col=Math.floor(i/per),row=i%per;const x=tb.x+28+col*cw,y=tb.y+100+row*46;
+    tg.append("text").attr("class","region-name").attr("x",x).attr("y",y).text(r.replace(" (KwaZulu-Natal)"," · KZN").replace(" (Eastern Cape)"," · EC").replace(" (Western Cape)"," · WC").replace("United States of America","USA").replace("Republic of Ireland","Ireland"));
+    tg.append("text").attr("class","region-n").attr("x",x+cw-24).attr("y",y).text(n);});
+}
+function togglePanel(){panelOpen=!panelOpen;try{localStorage.setItem("tshk-panel",panelOpen?"1":"0");}catch(e){}document.getElementById("panelbtn").textContent=panelOpen?"Hide regions":"Show regions";if(TOPO)buildScene();}
+document.getElementById("panelbtn").onclick=togglePanel;
+document.getElementById("panelbtn").textContent=panelOpen?"Hide regions":"Show regions";
+document.addEventListener("keydown",e=>{if(e.key==="r"||e.key==="R")togglePanel();});
+
+/* Footer */
+svg.append("text").attr("class","foot").attr("x",70).attr("y",H-40).text("Pins mark the suburb or town of each centre · Regions as named by TRSH: Gauteng, Emazweni, Ezenzweni, Emangalisweni, Mpumalanga, North West, and the centres beyond South Africa · Basemap: Natural Earth");
+svg.append("text").attr("class","foot").attr("x",W-70).attr("y",H-40).attr("text-anchor","end").text(location.hostname&&location.hostname!=="localhost"?location.hostname:"tshk-compass.vercel.app");
+
+function ensureLib(name,url){return new Promise((res,rej)=>{if(window[name])return res();const sc=document.createElement("script");sc.src=url;sc.onload=()=>res();sc.onerror=()=>rej(new Error(name+" library could not be loaded"));document.head.appendChild(sc);});}
+ensureLib("d3","https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js").then(()=>ensureLib("topojson","https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js")).then(()=>fetch(ATLAS)).then(r=>r.json()).then(topo=>{TOPO=topo;buildScene();})
+.catch(err=>{svg.append("text").attr("class","hdr-sub").attr("x",70).attr("y",300).text("Map data could not be loaded: "+err.message);});
+
+if(LIVE)setTimeout(()=>location.reload(),60*60*1000);
+};
+</script>
+</body>
+</html>
