@@ -9,7 +9,7 @@
   "scripts": {
     "test": "node --test tests/unit/*.test.js",
     "test:e2e": "node tests/e2e/paywall.test.cjs",
-    "test:dom": "node tests/dom/dom-flows.mjs"
+    "test:dom": "node tests/dom/dom-flows.mjs && node tests/dom/boot-smoke.mjs"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

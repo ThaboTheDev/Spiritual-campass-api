@@ -295,6 +295,8 @@ body.locked{overflow:hidden}
     </div>
 
     <button class="btn primary" id="btn-start">Start compass <small data-t="btn_start" data-pre="· "></small></button>
+    <button class="btn quiet" id="btn-travel">Travel direction (walking or driving) <small data-t="travel_btn" data-pre="· "></small></button>
+    <p class="note warnbox" id="travel-note" hidden><b>Travel direction mode:</b> the dial shows your GPS course over the ground while you move — not the direction the phone faces. Rotating the phone in your hand does not change it, and it can never confirm prayer or msamo alignment. <i data-t="travel_note"></i></p>
     <div class="card" id="suncard" hidden>
       <h2 id="sun-title">Use the sun <span data-t="sun_title"></span></h2>
       <p class="note" id="sun-why">This phone is not giving a compass direction, so the app can guide you from the position of the sun instead.</p>
@@ -304,6 +306,7 @@ body.locked{overflow:hidden}
         <div class="ro wide"><div class="k">Facing the sun <i data-t="sun_facing" data-pre="· "></i></div><div class="v text" id="sun-turn">—</div></div>
         <div class="ro wide"><div class="k">Using a stick's shadow <i data-t="sun_shadow" data-pre="· "></i></div><div class="v text" id="sun-shadow">—</div></div>
       </div>
+      <p class="note warnbox" id="sun-safe"><b>Never look directly at the sun.</b> <i data-t="sun_never"></i></p>
       <button class="btn primary" id="btn-suncal" hidden>Set: phone is pointing at the sun <small data-t="btn_suncal" data-pre="· "></small></button>
       <button class="btn quiet" id="btn-northcal" hidden>Set: phone is pointing north <small data-t="btn_northcal" data-pre="· "></small></button>
     </div>
@@ -338,10 +341,10 @@ body.locked{overflow:hidden}
     </div>
 
     <div class="level">
-      <div class="bubble-box" aria-hidden="true"><div class="bubble" id="bubble"></div></div>
+      <div class="bubble-box" id="bubble-box" aria-hidden="true"><div class="bubble" id="bubble"></div></div>
       <div class="t"><b id="level-t">Level</b><span id="level-s">Keep the phone flat for an accurate reading</span></div>
     </div>
-    <p class="note">Aligned means within 3° of the true bearing to Ekuphumuleni. The phone vibrates once when alignment is reached. <i data-t="note_aligned"></i></p>
+    <p class="note">Aligned is shown only when the phone's own error estimate keeps the true bearing within 3° of Ekuphumuleni's — it is never shown outside that budget. The phone vibrates once when alignment is reached. <i data-t="note_aligned"></i></p>
   </section>
 
   <!-- LOCATION -->
@@ -399,6 +402,12 @@ body.locked{overflow:hidden}
     <h3>Accuracy <span data-t="guide_acc" data-pre="· "></span></h3>
     <p>A phone compass reads magnetic north. Across Southern Africa magnetic north sits roughly 17° to 28° west of true north, so the app corrects every reading with the World Magnetic Model (WMM 2025) for your position. If the arrow wanders, move the phone in a figure‑8 a few times and keep it away from metal, magnets and speakers. On iPhone the compass must be allowed each time the page is opened.</p>
     <p>If your phone has no compass, the app still gives the true bearing and the magnetic bearing to set on a hand compass. Bearings are great‑circle bearings from your position; distances are in kilometres.</p>
+
+    <h3>Diagnostics <span data-t="diag_title" data-pre="· "></span></h3>
+    <details class="diag" id="diag" open><summary>Magnetic model, sensors and quality</summary>
+      <pre id="diag-body">—</pre>
+      <p class="note">The magnetic model version, epoch and validity dates above are the same numbers the mobile app uses — compare them when checking web/mobile agreement. A constant magnetic bias (car body, rebar, phone case) can still fool the field-strength check.</p>
+    </details>
 
     <h3>Languages <span>· isiZulu · Português · Chichewa · iciBemba</span></h3>
     <p>English is always shown. Use the language selector at the top to place isiZulu, Português (Moçambique), Chichewa/Chinyanja (Malawi and Zambia) or iciBemba (Zambia) beside it. Translations were prepared for the centres in those countries; corrections from speakers there are welcome.</p>
@@ -555,6 +564,7 @@ body.locked{overflow:hidden}
 <script src="config.js"></script>
 <script src="lang.js"></script>
 <script src="geo.js"></script>
+<script src="engine.js"></script>
 <script src="member.js"></script>
 <script src="app.js"></script>
 
